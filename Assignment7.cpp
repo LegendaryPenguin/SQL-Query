@@ -2,10 +2,9 @@
 // Author: Nischay Rawal
 // Created: 04/15/2025
 // Description: Connects to EECS MySQL server and performs 13 SQL queries via C++
-// Inputs: None
+// Inputs: SQL Database
 // Output: Console output of query results
 // Sources: MySQL Connector/C++ documentation, ChatGPT assistance
-
 
 #include <iostream>
 #include <mysql_driver.h>
@@ -19,21 +18,23 @@ using namespace sql;
 
 int main() {
     try {
+        // Establish connection to the MySQL server
         mysql::MySQL_Driver *driver = mysql::get_mysql_driver_instance();
         Connection *con = driver->connect("tcp://mysql.eecs.ku.edu", "348s25_n791r289", "ohvei9Ae");
         con->setSchema("348s25_n791r289");
 
+        // Create a statement object for executing queries
         Statement *stmt = con->createStatement();
         ResultSet *res;
 
-        // Query 1
+        // Query 1: Retrieve students majoring in Information Systems (IS)
         cout << "1. Students majoring in IS (Information Systems):\n";
         res = stmt->executeQuery("SELECT StdFirstName, StdLastName FROM Student WHERE StdMajor = 'IS'");
         while (res->next()) {
             cout << " - " << res->getString("StdFirstName") << " " << res->getString("StdLastName") << endl;
         }
 
-        // Query 2
+        // Query 2: Retrieve students enrolled in more than two courses
         cout << "\n2. Students enrolled in more than two courses:\n";
         res = stmt->executeQuery(
             "SELECT S.StdFirstName, S.StdLastName FROM Student S "
@@ -43,7 +44,7 @@ int main() {
             cout << " - " << res->getString("StdFirstName") << " " << res->getString("StdLastName") << endl;
         }
 
-        // Query 3
+        // Query 3: Retrieve faculty in Physics teaching for more than 5 years
         cout << "\n3. Faculty in Physics teaching more than 5 years:\n";
         res = stmt->executeQuery(
             "SELECT FacFirstName, FacLastName FROM Faculty "
@@ -52,7 +53,7 @@ int main() {
             cout << " - " << res->getString("FacFirstName") << " " << res->getString("FacLastName") << endl;
         }
 
-        // Query 4
+        // Query 4: Retrieve departments with more than 50 students
         cout << "\n4. Departments with more than 50 students:\n";
         res = stmt->executeQuery(
             "SELECT StdMajor, COUNT(*) AS Total FROM Student GROUP BY StdMajor HAVING Total > 50");
@@ -60,7 +61,7 @@ int main() {
             cout << " - " << res->getString("StdMajor") << ": " << res->getInt("Total") << endl;
         }
 
-        // Query 5
+        // Query 5: Retrieve courses with 'Data' in the title taught by Dr. Johnson
         cout << "\n5. Courses with 'Data' in title taught by Dr. Johnson:\n";
         res = stmt->executeQuery(
             "SELECT C.CourseNo, C.CrsDesc FROM Course C "
@@ -71,7 +72,7 @@ int main() {
             cout << " - " << res->getString("CourseNo") << ": " << res->getString("CrsDesc") << endl;
         }
 
-        // Query 6
+        // Query 6: Retrieve students not enrolled in SP24 or FA23
         cout << "\n6. Students not enrolled in SP24 or FA23:\n";
         res = stmt->executeQuery(
             "SELECT StdFirstName, StdLastName FROM Student "
@@ -82,14 +83,14 @@ int main() {
             cout << " - " << res->getString("StdFirstName") << " " << res->getString("StdLastName") << endl;
         }
 
-        // Query 7
+        // Query 7: Retrieve the second-highest GPA
         cout << "\n7. Second-highest GPA:\n";
         res = stmt->executeQuery("SELECT DISTINCT StdGPA FROM Student ORDER BY StdGPA DESC LIMIT 1 OFFSET 1");
         if (res->next()) {
             cout << " - GPA: " << res->getDouble("StdGPA") << endl;
         }
 
-        // Query 8
+        // Query 8: Retrieve students who are TAs with GPA > 3.5
         cout << "\n8. Students who are TAs with GPA > 3.5:\n";
         res = stmt->executeQuery(
             "SELECT DISTINCT S.StdFirstName, S.StdLastName FROM Student S "
@@ -99,7 +100,7 @@ int main() {
             cout << " - " << res->getString("StdFirstName") << " " << res->getString("StdLastName") << endl;
         }
 
-        // Query 9
+        // Query 9: Retrieve students enrolled after 2022
         cout << "\n9. Students enrolled after 2022:\n";
         res = stmt->executeQuery(
             "SELECT S.StdFirstName, S.StdLastName, O.CourseNo FROM Student S "
@@ -111,7 +112,7 @@ int main() {
                  << " → Course: " << res->getString("CourseNo") << endl;
         }
 
-        // Query 10
+        // Query 10: Retrieve the top 3 highest-paid faculty
         cout << "\n10. Top 3 highest-paid faculty:\n";
         res = stmt->executeQuery(
             "SELECT FacFirstName, FacLastName, FacSalary FROM Faculty ORDER BY FacSalary DESC LIMIT 3");
@@ -120,7 +121,7 @@ int main() {
                  << " → $" << res->getDouble("FacSalary") << endl;
         }
 
-        // Query 11
+        // Query 11: Insert a new student record for Alice Smith
         cout << "\n11. Insert Alice Smith:\n";
         stmt->execute(
             "INSERT INTO Student (StdNo, StdFirstName, StdLastName, StdCity, StdState, StdZip, StdMajor, StdClass, StdGPA) "
@@ -130,7 +131,7 @@ int main() {
             cout << " - Inserted: " << res->getString("StdFirstName") << " " << res->getString("StdLastName") << endl;
         }
 
-        // Query 12
+        // Query 12: Update Bob Norbert's city and zip code to Overland Park, KS
         cout << "\n12. Update Bob Norbert to Overland Park, KS:\n";
         stmt->execute("UPDATE Student SET StdCity = 'OVERLAND PARK', StdZip = '66212' WHERE StdLastName = 'NORBERT'");
         res = stmt->executeQuery("SELECT * FROM Student WHERE StdLastName = 'NORBERT'");
@@ -139,10 +140,12 @@ int main() {
                  << " → " << res->getString("StdCity") << ", " << res->getString("StdZip") << endl;
         }
 
+        // Clean up resources
         delete res;
         delete stmt;
         delete con;
     } catch (SQLException &e) {
+        // Handle SQL exceptions
         cerr << "SQL Error: " << e.what() << endl;
     }
 
